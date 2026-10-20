@@ -47,19 +47,22 @@ jobs:
     permissions:
       contents: write
     steps:
+      # 需要 checkout：gh release 依赖仓库上下文，发布说明也从仓库里取
+      - uses: actions/checkout@v7
+
       - uses: actions/download-artifact@v8
         with:
           name: iCloud-win32-x64
           path: dist/iCloud-win32-x64
 
       - name: 打包成单文件 ZIP
-        run: cd dist && zip -qr "iCloud-${{ github.ref_name }}-win32-x64.zip" iCloud-win32-x64
+        run: cd dist && zip -qr "iCloud-${GITHUB_REF_NAME}-win32-x64.zip" iCloud-win32-x64
 
       - name: 创建 Release
         run: |
           gh release create "${GITHUB_REF_NAME}" \
             "dist/iCloud-${GITHUB_REF_NAME}-win32-x64.zip" \
-            --title "${GITHUB_REF_NAME}" \
-            --generate-notes
+            --title "iCloud 桌面版 ${GITHUB_REF_NAME}" \
+            --notes-file docs/RELEASE-NOTES.md
         env:
           GH_TOKEN: ${{ github.token }}
