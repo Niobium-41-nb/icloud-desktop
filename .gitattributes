@@ -1,0 +1,7 @@
+# 统一行尾：源码走 LF，Windows 脚本走 CRLF
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.png binary
+*.ico binary

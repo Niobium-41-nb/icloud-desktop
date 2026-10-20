@@ -1,0 +1,20 @@
+{
+  "name": "icloud-desktop",
+  "productName": "iCloud",
+  "version": "1.0.0",
+  "private": true,
+  "description": "iCloud 桌面客户端 — iCloud.com.cn 的原生桌面外壳",
+  "main": "src/main.js",
+  "author": "iCloud Desktop",
+  "license": "MIT",
+  "scripts": {
+    "start": "node tools/launch.js",
+    "test": "node tools/test-url-policy.js",
+    "icon": "node tools/gen-icon.js",
+    "package": "node tools/package.js"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "electron": "^44.9.0"
+  }
+}

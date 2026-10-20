@@ -1,0 +1,65 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: 构建 Windows x64
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 校验跳转策略与路由表
+        run: npm test
+
+      - name: 打包
+        run: npm run package
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: iCloud-win32-x64
+          path: dist/iCloud-win32-x64
+          retention-days: 14
+          if-no-files-found: error
+
+  release:
+    name: 发布 Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: iCloud-win32-x64
+          path: dist/iCloud-win32-x64
+
+      - name: 打包成单文件 ZIP
+        run: cd dist && zip -qr "iCloud-${{ github.ref_name }}-win32-x64.zip" iCloud-win32-x64
+
+      - name: 创建 Release
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            "dist/iCloud-${GITHUB_REF_NAME}-win32-x64.zip" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

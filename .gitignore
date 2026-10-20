@@ -1,0 +1,18 @@
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+release/
+
+# 本地分析草稿（含桌面截图，不入库）
+_re/
+
+# 日志与编辑器杂项
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
