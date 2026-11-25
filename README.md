@@ -62,6 +62,13 @@ $env:ELECTRON_MIRROR='https://npmmirror.com/mirrors/electron/'
 npm run package
 ```
 
+GitHub 下载不稳定时，也可指定已缓存的 Electron ZIP 所在目录离线打包：
+
+```powershell
+$env:ELECTRON_ZIP_DIR='C:\path\to\electron-zip-cache'
+npm run package
+```
+
 产物：
 
 | 路径 | 说明 |

@@ -1,7 +1,7 @@
 {
   "name": "icloud-desktop",
   "productName": "iCloud",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "iCloud 桌面客户端 — iCloud.com.cn 的原生桌面外壳",
   "main": "src/main.js",

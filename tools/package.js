@@ -28,6 +28,7 @@ async function main() {
     out: outDir,
     overwrite: true,
     asar: true,
+    electronZipDir: process.env.ELECTRON_ZIP_DIR || undefined,
     prune: true,
     icon: path.join(appDir, 'assets', 'icon.ico'),
     appVersion: pkg.version,
