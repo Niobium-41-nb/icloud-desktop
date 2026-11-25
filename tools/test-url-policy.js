@@ -25,6 +25,8 @@ check('auth iframe origin', nav.isInAppUrl('https://idmsa.apple.com/appleauth/au
 check('appleid origin', nav.isInAppUrl('https://appleid.apple.com/x'), true);
 check('about:blank popup', nav.isInAppUrl('about:blank'), true);
 check('blob child', nav.isInAppUrl('blob:https://www.icloud.com.cn/abc'), true);
+check('foreign blob', nav.isInAppUrl('blob:https://example.com/abc'), false);
+check('opaque blob', nav.isInAppUrl('blob:null/abc'), false);
 
 // --- must NOT stay in the app window ---------------------------------------
 check('support.apple.com', nav.isInAppUrl('https://support.apple.com/zh-cn/icloud'), false);
@@ -34,6 +36,10 @@ check('suffix trick', nav.isInAppUrl('https://evil-icloud.com.cn/'), false);
 check('http downgrade', nav.isInAppUrl('http://www.icloud.com.cn/'), false);
 check('file url', nav.isInAppUrl('file:///C:/x.html'), false);
 check('javascript', nav.isInAppUrl('javascript:alert(1)'), false);
+check('data navigation', nav.isInAppUrl('data:text/html,<h1>x</h1>'), false);
+check('devtools navigation', nav.isInAppUrl('devtools://devtools/bundled/inspector.html'), false);
+check('embedded credentials', nav.isInAppUrl('https://user:pass@www.icloud.com.cn/'), false);
+check('non-standard port', nav.isInAppUrl('https://www.icloud.com.cn:8443/'), false);
 
 // --- external classification ----------------------------------------------
 check('mailto', nav.isExternalUrl('mailto:a@b.c'), true);

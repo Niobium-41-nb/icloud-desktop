@@ -47,6 +47,8 @@ async function main() {
       /^\/tools(\/|$)/,
       /^\/docs(\/|$)/,
       /^\/\.git(\/|$)/,
+      /^\/\.github(\/|$)/,
+      /^\/\.workbuddy(\/|$)/,
       /^\/.*\.md$/,
       /^\/package-lock\.json$/
     ]

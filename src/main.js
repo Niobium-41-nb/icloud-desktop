@@ -11,10 +11,9 @@
  */
 
 const path = require('path');
-const fs = require('fs');
 const {
-  app, BrowserWindow, Menu, Tray, shell, dialog, session, nativeImage,
-  nativeTheme, ipcMain, Notification, screen
+  app, BrowserWindow, Menu, shell, dialog, session,
+  nativeTheme, ipcMain, Notification
 } = require('electron');
 
 // ---------------------------------------------------------------------------
@@ -29,6 +28,7 @@ const { buildMenu } = require('./menu');
 const { buildTray } = require('./tray');
 const { ORIGIN, APPS, urlFor, appForUrl } = require('./apps');
 const { isInAppUrl } = require('./navigation');
+const downloads = require('./downloads');
 const { log } = require('./log');
 
 const APP_ID = 'com.icloud.desktop';
@@ -48,6 +48,7 @@ let quitting = false;
 let trayHintShown = false;
 let downloadSeq = 0;
 const activeDownloads = new Map();
+const reservedDownloadPaths = new Set();
 
 // ---------------------------------------------------------------------------
 // Chromium configuration
@@ -87,14 +88,6 @@ function notify(title, body, onClick) {
   notification.show();
 }
 
-function sanitizeFilename(name) {
-  const cleaned = String(name || 'download')
-    .replace(/[\u0000-\u001f<>:"/\\|?*]/g, '_')
-    .replace(/^\.+/, '')
-    .trim();
-  return cleaned.slice(0, 180) || 'download';
-}
-
 function currentZoom() {
   if (mainWindow && !mainWindow.isDestroyed()) {
     return mainWindow.webContents.getZoomFactor();
@@ -104,21 +97,8 @@ function currentZoom() {
 
 function updateProgressBar() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
-  let received = 0;
-  let total = 0;
-  let hasTotal = false;
-  for (const record of activeDownloads.values()) {
-    received += record.received || 0;
-    if (record.total > 0) {
-      total += record.total;
-      hasTotal = true;
-    }
-  }
-  if (!hasTotal) {
-    mainWindow.setProgressBar(-1);
-    return;
-  }
-  mainWindow.setProgressBar(Math.min(1, received / total), { mode: 'normal' });
+  const progress = downloads.aggregateProgress(activeDownloads.values());
+  mainWindow.setProgressBar(progress === null ? -1 : progress, { mode: 'normal' });
 }
 
 // ---------------------------------------------------------------------------
@@ -217,9 +197,15 @@ function setupSession() {
 
 function onWillDownload(_event, item) {
   const id = ++downloadSeq;
-  const filename = sanitizeFilename(item.getFilename());
+  const filename = downloads.sanitizeFilename(item.getFilename());
   const askWhereToSave = config.get('askWhereToSave') === true;
-  const targetPath = askWhereToSave ? '' : uniquePath(app.getPath('downloads'), filename);
+  const targetPath = askWhereToSave ? '' : downloads.uniquePath(
+    app.getPath('downloads'),
+    filename,
+    reservedDownloadPaths
+  );
+
+  if (targetPath) reservedDownloadPaths.add(downloads.pathKey(targetPath));
 
   if (askWhereToSave) {
     item.setSaveDialogOptions({
@@ -249,6 +235,7 @@ function onWillDownload(_event, item) {
 
   item.once('done', (_e, state) => {
     activeDownloads.delete(id);
+    if (targetPath) reservedDownloadPaths.delete(downloads.pathKey(targetPath));
     updateProgressBar();
     const savePath = item.getSavePath() || targetPath;
     log('download done', { filename, state, savePath });
@@ -261,26 +248,6 @@ function onWillDownload(_event, item) {
       notify('下载失败', filename + ' 未能完成下载');
     }
   });
-}
-
-/**
- * Returns a path in `dir` that does not collide with an existing file, using
- * the same "(1)", "(2)" convention as browsers.
- */
-function uniquePath(dir, filename) {
-  const parsed = path.parse(filename);
-  let candidate = path.join(dir, filename);
-  let counter = 1;
-  while (true) {
-    try {
-      fs.accessSync(candidate, fs.constants.F_OK);
-    } catch {
-      return candidate;
-    }
-    candidate = path.join(dir, `${parsed.name} (${counter})${parsed.ext}`);
-    counter += 1;
-    if (counter > 999) return path.join(dir, `${Date.now()}-${filename}`);
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -653,6 +620,7 @@ const actions = {
       meta: !!modifiers.meta
     };
     mainWindow.webContents.sendInputEvent(input);
+    mainWindow.webContents.sendInputEvent({ ...input, type: 'keyUp' });
   },
 
   closeWindow() {

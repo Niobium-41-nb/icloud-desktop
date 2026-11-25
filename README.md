@@ -214,8 +214,9 @@ docs/
 
 ```powershell
 npm start                 # 启动
-node tools\test-url-policy.js   # 跳转策略与路由断言
+npm test                  # 跳转策略、路由与下载断言
 npm run icon              # 重新生成 assets\icon.png / icon.ico / tray.png
+                          # icon.ico 内含 16–256 共 11 档，覆盖 100%/125%/150%/200% 缩放
 ```
 
 调试运行时应用（需带调试端口启动）：

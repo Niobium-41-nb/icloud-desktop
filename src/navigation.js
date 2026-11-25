@@ -18,9 +18,6 @@ const IN_APP_HOSTS = [
   'appleid.cdn-apple.com'
 ];
 
-/** Non-http schemes that the renderer legitimately produces for child windows. */
-const OPAQUE_SCHEMES = new Set(['about:', 'blob:', 'data:', 'chrome:', 'devtools:']);
-
 function hostOf(rawUrl) {
   try {
     return new URL(rawUrl).hostname.toLowerCase();
@@ -37,14 +34,31 @@ function schemeOf(rawUrl) {
   }
 }
 
+function isTrustedHttpsUrl(url) {
+  if (url.protocol !== 'https:' || url.username || url.password || url.port) return false;
+  const host = url.hostname.toLowerCase();
+  return IN_APP_HOSTS.some((h) => host === h || host.endsWith('.' + h));
+}
+
 function isInAppUrl(rawUrl) {
   if (!rawUrl) return false;
   if (rawUrl === 'about:blank') return true;
-  const scheme = schemeOf(rawUrl);
-  if (OPAQUE_SCHEMES.has(scheme)) return true;
-  if (scheme !== 'https:') return false;
-  const host = hostOf(rawUrl);
-  return IN_APP_HOSTS.some((h) => host === h || host.endsWith('.' + h));
+
+  let url;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return false;
+  }
+
+  if (url.protocol === 'blob:') {
+    try {
+      return isTrustedHttpsUrl(new URL(rawUrl.slice('blob:'.length)));
+    } catch {
+      return false;
+    }
+  }
+  return isTrustedHttpsUrl(url);
 }
 
 /** Links that should always open in the user's browser. */

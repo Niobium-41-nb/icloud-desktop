@@ -9,7 +9,7 @@
   "license": "MIT",
   "scripts": {
     "start": "node tools/launch.js",
-    "test": "node tools/test-url-policy.js",
+    "test": "node tools/test-url-policy.js && node tools/test-downloads.js",
     "icon": "node tools/gen-icon.js",
     "package": "node tools/package.js"
   },
